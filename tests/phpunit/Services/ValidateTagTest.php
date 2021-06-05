@@ -25,12 +25,21 @@ class ValidateTagTest extends TestCase {
      * @var ValidationService
      */
     protected $validationService;
+    /**
+     * @var UserChallengeService|\PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $challengeService;
 
     /**
      *
      */
     protected function setUp(): void {
         $container               = $this->createMock('\OCP\AppFramework\IAppContainer');
+
+        $this->challengeService = $this->createMock(UserChallengeService::class);
+        $container->method('get')->willReturn($this->challengeService);
+        $container->method('query')->willReturn($this->challengeService);
+
         $this->validationService = new ValidationService($container);
     }
 
@@ -82,7 +91,7 @@ class ValidateTagTest extends TestCase {
      * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function testValidateTagCseKeyBotNoCse() {
+    public function testValidateTagCseKeyButNoCse() {
         $mock = $this->getTagMock();
 
         $mock->method('getSseType')->willReturn(EncryptionService::DEFAULT_SSE_ENCRYPTION);
@@ -123,8 +132,9 @@ class ValidateTagTest extends TestCase {
      * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function testValidatePasswordMissingCseKey() {
+    public function testValidateTagMissingCseKey() {
         $mock = $this->getTagMock();
+        $this->challengeService->method('hasChallenge')->willReturn(true);
         $mock->method('getSseType')->willReturn(EncryptionService::SSE_ENCRYPTION_NONE);
         $mock->method('getCseType')->willReturn(EncryptionService::CSE_ENCRYPTION_V1R1);
         $mock->method('getCseKey')->willReturn('');
@@ -209,7 +219,7 @@ class ValidateTagTest extends TestCase {
 
         $mock->expects($this->any())
              ->method('getCseType')
-             ->will($this->onConsecutiveCalls('', EncryptionService::DEFAULT_CSE_ENCRYPTION, EncryptionService::DEFAULT_CSE_ENCRYPTION, EncryptionService::DEFAULT_CSE_ENCRYPTION));
+             ->will($this->onConsecutiveCalls('', EncryptionService::DEFAULT_CSE_ENCRYPTION, EncryptionService::DEFAULT_CSE_ENCRYPTION, EncryptionService::DEFAULT_CSE_ENCRYPTION, EncryptionService::DEFAULT_CSE_ENCRYPTION));
 
         $mock->method('getSseType')->willReturn(EncryptionService::DEFAULT_SSE_ENCRYPTION);
         $mock->method('getLabel')->willReturn('label');
@@ -252,6 +262,25 @@ class ValidateTagTest extends TestCase {
 
         $mock->expects($this->once())->method('setEdited');
         $this->validationService->validateTag($mock);
+    }
+
+    /**
+     *
+     */
+    public function testValidateTagCseUsedButNotAvailable() {
+        $mock = $this->getTagMock();
+
+        $mock->method('getSseType')->willReturn(EncryptionService::DEFAULT_SSE_ENCRYPTION);
+        $mock->method('getCseType')->willReturn(EncryptionService::CSE_ENCRYPTION_V1R1);
+
+        try {
+            $this->validationService->validateTag($mock);
+            $this->fail("Expected exception");
+        } catch(ApiException $e) {
+            $this->assertEquals('Invalid client side encryption type', $e->getMessage());
+            $this->assertEquals('4e8162e6', $e->getId());
+            $this->assertEquals(400, $e->getHttpCode());
+        }
     }
 
     /**

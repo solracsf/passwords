@@ -39,6 +39,7 @@ class ValidatePasswordTest extends TestCase {
 
         $this->challengeService = $this->createMock(UserChallengeService::class);
         $container->method('get')->willReturn($this->challengeService);
+        $container->method('query')->willReturn($this->challengeService);
 
         $this->validationService = new ValidationService($container);
     }

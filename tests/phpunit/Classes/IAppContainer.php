@@ -13,4 +13,8 @@ class IAppContainer {
     public function query($key) {
         return $this->objects[$key];
     }
+
+    public function get($key) {
+        return $this->objects[$key];
+    }
 }
