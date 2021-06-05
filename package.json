@@ -54,7 +54,7 @@
         "mini-css-extract-plugin": "^0.10.1",
         "node-sass": "^4.14.1",
         "optimize-css-assets-webpack-plugin": "^5.0.4",
-        "passwords-client": "https://git.mdns.eu/nextcloud/passwords-client/-/archive/stable/passwords-client-stable.tar.gz",
+        "passwords-client": "0.0.12",
         "random-material-color": "^1.0.5",
         "sass-loader": "^9.0.3",
         "sass-resources-loader": "^2.1.1",
